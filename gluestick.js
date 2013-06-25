@@ -35,7 +35,6 @@ var gluestick = gluestick || {};
 				}
 			}
 
-
 		})(),
 		extend : function(to, from){
 			for(var prop in from){
@@ -43,15 +42,50 @@ var gluestick = gluestick || {};
 					to[prop] = from[prop];
 				}
 			}
+		},
+		hasDBAttribute : function(node){
+			return node.hasAttribute("data-bind");
+		},
+		getDecendents : function(element,pred){
+			var elements = [];
+			this.traverse(element, pred, elements);
+			return elements;
+		},
+		// recursively find all elements which have a 
+		// data-bind attribute set.
+		traverse : function(node, pred, elements){
+
+			if(pred(node)) elements.push(node);
+
+			if(node.hasChildNodes()){
+				var child = node.firstChild;
+
+				while(child){
+					// Check to see if its an element node
+					if(child.nodeType === 1){
+						this.traverse(child, pred, elements);
+					}
+					child = child.nextSibling;
+				}
+			}
+		},
+		// TODO : make the event listening work for all browsers
+		addEvent : function(obj, event, cb){
+			obj.addEventListener(event,cb,false);
 		}
 	}
+
+
+
 
 	// alias for utility methods
 	var isFunction = glue.utils.isFunction,
 		isString = glue.utils.isString,
 		isObject = glue.utils.isObject,
 		unique = glue.utils.unique,
-		isPrivate = glue.utils.isPrivate;
+		isPrivate = glue.utils.isPrivate,
+		addEvent = glue.utils.addEvent;
+
 
 
 	var createGSFunction = function(propertyName, value){
@@ -76,7 +110,8 @@ var gluestick = gluestick || {};
 
 
 
-
+	// Creates a constructor function with any observables created
+	// as getter/setter functions.
 	glue.create = function(className, props){
 		var fn;
 	
@@ -98,7 +133,7 @@ var gluestick = gluestick || {};
 		// Create function for each observable property.
 		// Each function acts as a getter/setter
 		if(props.observables){
-			debugger;
+	
 			for(var prop in props.observables){
 				if(!isFunction(props.observables[prop])){
 					if(!isPrivate(prop)){
@@ -124,10 +159,47 @@ var gluestick = gluestick || {};
 		return fn;
 	};
 
+	// use this as a mixin to give ordinary objects and HTML elements
+	// databinding power.
+	var extender = {
+
+		addListener : function(obj,objProp,myProp){
+			if(!this.gluedProperties)
+				this.gluedProperties = {};
+
+			// create a container for objects interested in this
+			// particular property 'myProp'
+			if(!this.gluedProperties[myProp]){
+				this.gluedProperties[myProp] = {};
+			}
+
+			// If we are dealing with an input element, then we register for
+			// its change event, so that we know when the user has changed
+			// the value, so that we can update our listeners
+			if(this instanceof HTMLInputElement){
+				if(myProp === 'value'){
+					addEvent(this,'change',this.handleChangeEvent)
+				}
+			}
+
+			var listeners = this.gluedProperties[myProp];
+			listeners.ids = listeners.ids || (listeners.ids {});
+			listeners.cache = listeners.cache || (listeners.cache = []);
+
+			// Keep id of each object that is interested in me.
+			if(!listeners.ids[obj._id]){
+				listeners.ids[obj._id] = "on";
+				// Remember the instance thats interested in me and its property that we
+				// have bound to.
+				listeners.cache.push({id : obj._id, instance : obj, property: objProp })
+			}
+		},
+		handleChangeEvent : function(e){
+
+		}
 
 
-
-
+	};
 
 
 })(gluestick);
