@@ -195,7 +195,44 @@ var gluestick = gluestick || {};
 			}
 		},
 		handleChangeEvent : function(e){
+			if(e.type === "change"){
+				this.propertyChanged("value", this.value, this._id);
+			}
+		},
+		// propertyChanged is called when ever an observable property has been 
+		// updated or and html input element fires its change event
+		propertyChanged : function(myProp,newValue, byWho){
 
+			// if the change didn't come from me, then i called the 
+			// setter on my property which in turn, calls propertyChanged
+			// again on me, so that my listeners can get updated. It cascades
+			// through the binding network
+			if(byWho !== this._id){
+				if(isFunction(this[myProp])){
+					this[myProp](newValue);
+					return;
+				}else{
+					this[myProp] = newValue;
+				}
+			}
+
+			// Go through all that are interested in this property change
+			var l = this.gluedProperties[myProp];
+			var lnrs = l.cache;
+			var i,
+				k = lnrs.length;
+
+			for(i = 0; i < k; i++){
+				var c = lnrs[i];
+				if(l.ids[c.id] === "on"){
+					// Make sure that we aren't updating the object that 
+					// changed the property, so that we don't go around in 
+					// circles
+					if(byWho !== c.id){
+						c.instance.propertyChanged(c.property, newValue, this._id);
+					}
+				}
+			}
 		}
 
 
