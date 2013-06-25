@@ -274,6 +274,26 @@ var gluestick = gluestick || {};
 			// or onetime only
 			htmlEl.addListener(obj, objProp, htmlProp);
 			obj.addListener(htmlEl, htmlProp, objProp);
+		},
+		removeBinding : function(obj1,obj2,prop){
+		
+			var o = obj1.gluedProperties[prop];
+			if(!o){
+				throw new Error("Unknown property passed in.");
+			}
+
+			var i,
+				k = o.cache.length;
+	
+			if(obj2._id in o.ids){
+				for(var i = 0; i < k; i++){
+					var rmObj = o.cache[i];
+					if(rmObj.id === obj2._id){
+						o.cache.splice(i,1);
+					}
+				}
+				delete o.ids[obj2._id];
+			}
 		}
 
 	};
