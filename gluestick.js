@@ -84,7 +84,8 @@ var gluestick = gluestick || {};
 		isObject = glue.utils.isObject,
 		unique = glue.utils.unique,
 		isPrivate = glue.utils.isPrivate,
-		addEvent = glue.utils.addEvent;
+		addEvent = glue.utils.addEvent,
+		extend = glue.utils.extend;
 
 
 
@@ -183,7 +184,7 @@ var gluestick = gluestick || {};
 			}
 
 			var listeners = this.gluedProperties[myProp];
-			listeners.ids = listeners.ids || (listeners.ids {});
+			listeners.ids = listeners.ids || (listeners.ids = {});
 			listeners.cache = listeners.cache || (listeners.cache = []);
 
 			// Keep id of each object that is interested in me.
@@ -238,5 +239,46 @@ var gluestick = gluestick || {};
 
 	};
 
+
+	// object for all data-binding methods
+	var databinding = {
+		createBinding : function(htmlEl,obj){
+			// Check first to see if either object has been extended
+			// with the extender mixin, if not, do so then
+			if(!htmlEl._id){
+				extend(htmlEl,extender);
+				htmlEl._id = unique('html');
+			}
+			if(!obj._id || !obj.addListener){
+				extend(obj, extender);
+			}
+
+			var data_bind_string = htmlEl.getAttribute('data-bind');
+			var props = data_bind_string.split(":").map(function(e){
+				return e.trim();
+			});
+			var htmlProp = props[0];
+			var objProp = props[1];
+
+			if(htmlProp === "collection"){
+
+			}else{
+				htmlEl[htmlProp] = obj[objProp]();
+			}
+
+			this.setBinding(htmlEl, obj, htmlProp, objProp);
+
+		},
+		setBinding : function(htmlEl, obj, htmlProp, objProp){
+			// TODO: Maybe some sort of oneway/twoway sort of thing,
+			// or onetime only
+			htmlEl.addListener(obj, objProp, htmlProp);
+			obj.addListener(htmlEl, htmlProp, objProp);
+		}
+
+	};
+
+
+	window.db = databinding;
 
 })(gluestick);
