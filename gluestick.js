@@ -1,4 +1,4 @@
-var gluestick = gluestick || {};
+var glue = glue || {};
 
 (function(glue){
 
@@ -69,6 +69,19 @@ var gluestick = gluestick || {};
 				}
 			}
 		},
+
+		fetch_elements : function(htmlObj){
+			if(this.isString(htmlObj)){
+				htmlObj = document.getElementById(htmlObj);
+			}
+
+			if(!htmlObj) throw new Error("Oh Crap");
+
+			var elements = this.getDecendents(htmlObj, this.hasDBAttribute);
+			return {htmlObj : htmlObj, elements : elements};
+		},
+
+
 		// TODO : make the event listening work for all browsers
 		addEvent : function(obj, event, cb){
 			obj.addEventListener(event,cb,false);
@@ -86,6 +99,7 @@ var gluestick = gluestick || {};
 		isPrivate = glue.utils.isPrivate,
 		addEvent = glue.utils.addEvent,
 		extend = glue.utils.extend;
+		fetch_elements = glue.utils.fetch_elements;
 
 
 
@@ -294,11 +308,60 @@ var gluestick = gluestick || {};
 				}
 				delete o.ids[obj2._id];
 			}
+		},
+
+		// Public method
+		stick : function(htmlObj,obj){
+			
+			var elObj = glue.utils.fetch_elements(htmlObj);
+			var elements = elObj.elements;
+			htmlObj = elObj.htmlObj;
+
+			if(elements){
+				var i,
+					k = elements.length;
+
+				for(i = 0; i < k; i++){
+					this.createBinding(elements[i], obj);
+				}
+			}
+
+		},
+		// Public method
+		unstick : function(htmlObj, obj){
+		
+			var elObj = glue.utils.fetch_elements(htmlObj);
+			var elements = elObj.elements;
+
+			htmlObj = elObj.htmlObj;
+
+			if(elements){
+				var i,
+					k = elements.length;
+				for(i = 0; i < k; i++){
+				
+					var e = elements[i];
+					var data_bind_string = e.getAttribute('data-bind');
+					var props = data_bind_string.split(":").map(function(e){
+						return e.trim();
+					});
+					var htmlProp = props[0];
+					var objProp = props[1];
+
+					
+					this.removeBinding(e, obj, htmlProp);
+					this.removeBinding(obj, e, objProp);
+				}
+			}
 		}
 
 	};
 
+	glue.stick = databinding.stick.bind(databinding);
+	glue.unstick = databinding.unstick.bind(databinding);
+
+
 
 	window.db = databinding;
 
-})(gluestick);
+})(glue);
