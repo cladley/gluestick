@@ -276,6 +276,53 @@ var glue = glue || {};
 
 			if(htmlProp === "collection"){
 
+				var scpt = htmlEl.getElementsByTagName('script')[0];
+				if(!scpt || scpt.type !== "text/template")
+					throw new Error("a template needs to be included to render.");
+
+				
+				// Attach the template and the parent to the object we are
+				// binding to, so that when we add new objects to our collection
+				// then the collection can use its template to render to the parent
+
+				var parent = scpt.parentNode;
+				var template = scpt.innerHTML;
+				var items;
+				// if its an actual collection object passed in or is the
+				// collection a property of the object that has been passed in
+			
+				if(obj.length){
+					items = obj;
+				}	
+				else{
+					items = obj[objProp];
+				}
+
+				var htmlFrag = document.createDocumentFragment(),
+					i,
+					k = items.length;
+
+				for(i = 0; i < k; i++){
+					// create a temp element, so that we can pass in 
+					// a string and then pull out the elements straight 
+					// away
+					var tmp =  document.createElement('tbody');
+					tmp.innerHTML = template;
+					var element = tmp.firstElementChild;
+
+					// Create a binding between this newly created element
+					// and an object from the collection.
+					glue.stick(element, items[i]);
+					// save reference to the ui because if this item is remove
+					// from the collection at a later stage, we can remove the 
+					// actual html associated with it
+					items[i].ui = element;
+					htmlFrag.appendChild(element);
+				} 
+				parent.appendChild(htmlFrag);
+
+
+
 			}else{
 				htmlEl[htmlProp] = obj[objProp]();
 			}
