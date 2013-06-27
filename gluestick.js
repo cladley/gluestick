@@ -336,8 +336,7 @@ var glue = glue || {};
 			htmlEl.addListener(obj, objProp, htmlProp);
 			obj.addListener(htmlEl, htmlProp, objProp);
 		},
-		removeBinding : function(obj1,obj2,prop){
-		
+		unsetBinding : function(obj1,obj2,prop){
 			var o = obj1.gluedProperties[prop];
 			if(!o){
 				throw new Error("Unknown property passed in.");
@@ -355,6 +354,26 @@ var glue = glue || {};
 				}
 				delete o.ids[obj2._id];
 			}
+
+		},
+		removeBinding : function(htmlEl,obj){
+			
+			var data_bind_string = htmlEl.getAttribute('data-bind');
+			var props = data_bind_string.split(":").map(function(e){
+				return e.trim();
+			});
+
+			var htmlProp = props[0];
+			var objProp = props[1];
+
+			if(htmlProp === "collection"){
+
+			}else{
+
+					this.unsetBinding(htmlEl, obj, htmlProp);
+					this.unsetBinding(obj, htmlEl, objProp);
+			}
+			
 		},
 
 		// Public method
@@ -379,25 +398,24 @@ var glue = glue || {};
 		
 			var elObj = glue.utils.fetch_elements(htmlObj);
 			var elements = elObj.elements;
-
 			htmlObj = elObj.htmlObj;
 
 			if(elements){
 				var i,
 					k = elements.length;
 				for(i = 0; i < k; i++){
-				
-					var e = elements[i];
-					var data_bind_string = e.getAttribute('data-bind');
-					var props = data_bind_string.split(":").map(function(e){
-						return e.trim();
-					});
-					var htmlProp = props[0];
-					var objProp = props[1];
 
-					
-					this.removeBinding(e, obj, htmlProp);
-					this.removeBinding(obj, e, objProp);
+					this.removeBinding(elements[i], obj);
+				
+			
+
+
+				
+					// TODO : If its a collection, then 
+					// we have to unbind each item in the collection
+					// with its corresponding item in the ui. maybe 
+					// use the ui property on the item in the collection
+				
 				}
 			}
 		}
