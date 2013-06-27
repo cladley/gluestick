@@ -45,6 +45,11 @@ var glue = glue || {};
 		},
 		hasDBAttribute : function(node){
 			return node.hasAttribute("data-bind");
+			if(node.hasAttribute("data-bind")){
+				var str = node.getAttribute("data-bind");
+				return !/collection\s*:/.test(str);
+			}
+		
 		},
 		getDecendents : function(element,pred){
 			var elements = [];
@@ -55,8 +60,13 @@ var glue = glue || {};
 		// data-bind attribute set.
 		traverse : function(node, pred, elements){
 
-			if(pred(node)) elements.push(node);
-
+			if(pred(node)) {
+				elements.push(node);
+				var str = node.getAttribute("data-bind");
+				if(/collection\s*:/.test(str)){
+					return;
+				}
+			}
 			if(node.hasChildNodes()){
 				var child = node.firstChild;
 
@@ -338,6 +348,7 @@ var glue = glue || {};
 		},
 		unsetBinding : function(obj1,obj2,prop){
 			var o = obj1.gluedProperties[prop];
+	
 			if(!o){
 				throw new Error("Unknown property passed in.");
 			}
@@ -367,11 +378,27 @@ var glue = glue || {};
 			var objProp = props[1];
 
 			if(htmlProp === "collection"){
+				var items = obj[objProp];
 
+				if(items && items.length){
+
+					var i,
+					    k = items.length;
+
+					for(i=0; i < k; i++){
+						var item = items[i];
+						if(item.ui){
+							glue.unstick(item.ui,item);
+							
+						}
+
+					}
+				}
+			
 			}else{
 
-					this.unsetBinding(htmlEl, obj, htmlProp);
-					this.unsetBinding(obj, htmlEl, objProp);
+				this.unsetBinding(htmlEl, obj, htmlProp);
+				this.unsetBinding(obj, htmlEl, objProp);
 			}
 			
 		},
@@ -399,6 +426,7 @@ var glue = glue || {};
 			var elObj = glue.utils.fetch_elements(htmlObj);
 			var elements = elObj.elements;
 			htmlObj = elObj.htmlObj;
+
 
 			if(elements){
 				var i,
