@@ -308,6 +308,17 @@ var glue = glue || {};
 					items = obj[objProp];
 				}
 
+				items.bindingObjects = items.bindingObjects || [];
+
+
+				var o = { 
+					template : template,
+					parentContainer : parent
+				};
+
+				items.bindingObjects.push(o);
+
+		
 				var htmlFrag = document.createDocumentFragment(),
 					i,
 					k = items.length;
@@ -434,25 +445,40 @@ var glue = glue || {};
 				for(i = 0; i < k; i++){
 
 					this.removeBinding(elements[i], obj);
-				
-			
-
-
-				
-					// TODO : If its a collection, then 
-					// we have to unbind each item in the collection
-					// with its corresponding item in the ui. maybe 
-					// use the ui property on the item in the collection
-				
+	
 				}
 			}
 		}
 
 	};
 
+
+	function Collection(){
+		this.length = 0;
+	}
+	Collection.prototype.push = function(item){
+	
+		if(this.bindingObjects){
+
+			var i,
+				k = this.bindingObjects.length;
+
+			for(i = 0; i < k; i++){
+				var o = this.bindingObjects[i];
+				var tmp =  document.createElement('tbody');
+				tmp.innerHTML = o.template;
+				var element = tmp.firstElementChild;
+				o.parentContainer.appendChild(element);
+				glue.stick(element,item);
+			}
+			
+		}
+		Array.prototype.push.call(this,item);
+	}
+
 	glue.stick = databinding.stick.bind(databinding);
 	glue.unstick = databinding.unstick.bind(databinding);
-
+	glue.Collection = Collection;
 
 
 	window.db = databinding;
